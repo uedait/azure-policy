@@ -7,8 +7,8 @@
 - displayName: 許可されているリソースの種類
 - policyType: Custom
 - mode: All
-- version: 2.0.0
-- 定義ファイル: `policyDefinition.json`
+
+定義ファイル: `policyDefinition.json`
 
 このポリシーは `type` フィールドを評価し、`listOfAllowedResourceTypes` パラメータに含まれないリソースタイプを検出した場合に指定した `effect` を適用します。
 
@@ -36,30 +36,23 @@
 }
 ```
 
-## デプロイ方法（Azure CLI）
+## デプロイ方法（az rest）
 
-以下はポリシー定義を作成し、サブスクリプションに割り当てる最小の例です。`<SUBSCRIPTION_ID>` とファイルパスは環境に合わせて置き換えてください。
+ポリシー定義が ARM 形式（`properties` 等を含む完全な定義）である場合、`az policy definition create` では登録できないことがあります。そのため、本リポジトリのデプロイ方法は `az rest` を使った直接 PUT の手順のみを推奨します。サブスクリプション ID は匿名化したプレースホルダに置き換えています。
 
 ```bash
-# ポリシー定義を作成
-az policy definition create \
-  --name allowed-resource-types \
-  --display-name "許可されているリソースの種類" \
-  --description "指定したリソース種類のみを許可する" \
-  --rules policyDefinition.json \
-  --params params.json \
-  --mode All \
-  --subscription <SUBSCRIPTION_ID>
+policyName="allowed-resource-types"
+policyFile="policyDefinition.json"
+apiVersion="2023-04-01"
+subId=$(az account show --query id -o tsv)
 
-# サブスクリプションに割り当て（例）
-az policy assignment create \
-  --name enforce-allowed-resources \
-  --scope /subscriptions/<SUBSCRIPTION_ID> \
-  --policy allowed-resource-types \
-  --params params.json
+body=$(jq -c . "$policyFile")
+
+uri="https://management.azure.com/subscriptions/<SUBSCRIPTION_ID>/providers/Microsoft.Authorization/policyDefinitions/${policyName}?api-version=${apiVersion}"
+az rest --method put --uri "$uri" --body "$body"
 ```
 
-注意: 上記コマンドを実行するには適切な権限（例: Policy Contributor）が必要です。
+上記はユーザー環境で実行する際に `<SUBSCRIPTION_ID>` を実際のサブスクリプション ID に置き換えてください。`az account show --query id -o tsv` を使うことでスクリプト内で ID を取得して利用することもできます。
 
 ## 検証・テスト方法
 

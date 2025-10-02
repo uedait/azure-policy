@@ -1,0 +1,53 @@
+{
+  "properties": {
+    "displayName": "許可されているリソースの種類",
+    "policyType": "Custom",
+    "mode": "All",
+    "description": "環境内でデプロイを許可するリソースの種類をホワイトリスト形式で指定します。指定外のリソースはポリシー効果に従って拒否または監査されます。",
+    "metadata": {
+      "version": "2.0.0",
+      "category": "General"
+    },
+    "version": "2.0.0",
+    "parameters": {
+      "listOfAllowedResourceTypes": {
+        "type": "Array",
+        "metadata": {
+          "description": "デプロイ可能な（許可された）リソースの種類の一覧。",
+          "displayName": "許可されているリソースの種類",
+          "strongType": "resourceTypes"
+        }
+      },
+      "effect": {
+        "type": "String",
+        "metadata": {
+          "displayName": "効果",
+          "description": "ポリシーの実行を有効または無効にします"
+        },
+        "allowedValues": [
+          "Audit",
+          "Deny",
+          "Disabled"
+        ],
+        "defaultValue": "Deny"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "allOf": [
+          {
+            "field": "type",
+            "notIn": "[parameters('listOfAllowedResourceTypes')]"
+          },
+          {
+            "value": "[field('type')]",
+            "exists": true
+          }
+        ]
+      },
+      "then": {
+        "effect": "[parameters('effect')]"
+      }
+    }
+  }
+}
